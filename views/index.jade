@@ -1,0 +1,72 @@
+doctype html
+html
+  head
+    title 在线协同代码编辑器
+    link(rel='stylesheet', href='/stylesheets/style.css')
+    script(src='https://cdnjs.cloudflare.com/ajax/libs/json3/3.3.2/json3.min.js')
+  body
+    h1 这是一个在线协同代码编辑器
+    h3 加入现有房间
+    ul#room-list
+    h3 新建一个房间
+    form(action='javascript:createRoom()')
+      | 输入房间号:
+      br
+      input(type='text', id='room-name', name='roomname', value='')
+      br
+      input(type='submit', value='创建房间')
+    script.
+        function get(url, callback) {
+            const xmlhttp = new XMLHttpRequest();
+            xmlhttp.onreadystatechange = function () {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    callback(JSON.parse(xmlhttp.responseText));
+                }
+            }
+            xmlhttp.open("GET", url, true);
+            xmlhttp.send();
+        }
+        function post(url, data, callback) {
+            const xmlhttp = new XMLHttpRequest();
+            xmlhttp.onreadystatechange = function () {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    callback(JSON.parse(xmlhttp.responseText));
+                }
+            }
+            xmlhttp.open("POST", url, true);
+            xmlhttp.setRequestHeader("Content-type","application/json");
+            xmlhttp.send(data);
+        }
+        function createRoom() {
+            var room=document.getElementById("room-name");
+            console.log("room name:", room.value);
+            var data=JSON.stringify({"name":room.value});
+            post('http://localhost:3000/gists/new', data, function (data) {
+                console.log(data.id, data.name);
+                var listLink = document.createElement("a");
+                listLink.href = '/api/room' + '?name=' + data.name;
+                var text = document.createTextNode(data.name);
+                var listItem = document.createElement("li");
+                var roomList=document.getElementById("room-list");
+                listLink.appendChild(text);
+                listItem.appendChild(listLink);
+                roomList.appendChild(listItem);
+                window.location.href = listLink.href;
+            })
+
+        }
+        get('http://localhost:3000/gists/roomlist', function (data) {
+            var rooms = data.rooms;
+            var roomList=document.getElementById("room-list");
+            for(var i=0; i<rooms.length; i++) {
+                var listLink = document.createElement("a");
+                listLink.href='/api/room'+'?name='+rooms[i].name;
+                var text = document.createTextNode(rooms[i].name);
+                var listItem = document.createElement("li");
+                listLink.appendChild(text);
+                listItem.appendChild(listLink);
+                roomList.appendChild(listItem);
+            }
+        })
+
+
